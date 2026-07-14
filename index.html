@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Clientes · Inmobiliaria</title>
+<style>
+  :root{
+    --bg:#05070c;
+    --panel:#0c1220;
+    --panel-2:#111a2c;
+    --line:#1c2740;
+    --blue:#2f7dff;
+    --blue-2:#6fb1ff;
+    --blue-dim:#173259;
+    --white:#f4f7fb;
+    --muted:#8ea0bd;
+    --red:#ff5c5c;
+    --yellow:#ffb020;
+    --green:#3ecf8e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 0%, #0a1730 0%, transparent 45%),
+      radial-gradient(circle at 85% 10%, #0a1024 0%, transparent 40%),
+      var(--bg);
+    color:var(--white);
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--blue-dim); color:var(--white); }
+  a{color:var(--blue-2);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--panel-2); border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  header.top{
+    padding:22px 28px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:20;
+    background:rgba(5,7,12,0.9);
+    backdrop-filter:blur(10px);
+    flex-wrap:wrap; gap:12px;
+  }
+  header.top h1{
+    font-size:19px; margin:0; letter-spacing:.3px; font-weight:700;
+    display:flex; align-items:center; gap:10px;
+  }
+  header.top h1 .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--blue); box-shadow:0 0 12px var(--blue);
+  }
+  header.top .sub{ color:var(--muted); font-size:12.5px; margin-top:2px;}
+  .top-actions{ display:flex; gap:10px; flex-wrap:wrap;}
+
+  button, .btn{
+    font-family:inherit; cursor:pointer; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--white);
+    padding:9px 14px; border-radius:8px; font-size:13px; font-weight:600;
+    transition:.15s; display:inline-flex; align-items:center; gap:6px;
+  }
+  button:hover, .btn:hover{ border-color:var(--blue); color:var(--blue-2); }
+  button.primary{ background:var(--blue); border-color:var(--blue); color:#04101f; }
+  button.primary:hover{ background:var(--blue-2); color:#04101f;}
+  button.ghost{ background:transparent; }
+  button.danger:hover{ border-color:var(--red); color:var(--red); }
+  button.small{ padding:5px 9px; font-size:11.5px; border-radius:6px;}
+
+  main{ max-width:1300px; margin:0 auto; padding:22px 28px 60px;}
+
+  .stats{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px;
+  }
+  .stat b{ font-size:24px; display:block; color:var(--blue-2);}
+  .stat span{ font-size:12px; color:var(--muted); }
+  .stat.alert b{ color:var(--red); }
+  .stat.warn b{ color:var(--yellow); }
+  .stat.good b{ color:var(--green); }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin-bottom:20px;
+  }
+  .panel h2{
+    font-size:14px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--blue-2); display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:6px;
+  }
+  .panel h2 small{ color:var(--muted); text-transform:none; letter-spacing:0; font-weight:400;}
+
+  .alert-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  .alert-col h3{ font-size:12px; margin:0 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  .alert-col.overdue h3{ color:var(--red);}
+  .alert-col.today h3{ color:var(--yellow);}
+  .alert-col.soon h3{ color:var(--blue-2);}
+  .alert-item{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:9px;
+    padding:9px 11px; margin-bottom:8px; font-size:12.5px; cursor:pointer;
+  }
+  .alert-item:hover{ border-color:var(--blue);}
+  .alert-item .an{ font-weight:700; }
+  .alert-item .ad{ color:var(--muted); font-size:11.5px; margin-top:2px;}
+  .empty-mini{ color:var(--muted); font-size:12px; font-style:italic;}
+
+  .filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .filters input{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--white);
+    padding:10px 12px; border-radius:8px; font-size:13.5px; font-family:inherit;
+    min-width:280px; flex:1;
+  }
+  .filters input::placeholder{ color:var(--muted); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; color:var(--muted); font-weight:600; font-size:11.5px;
+    text-transform:uppercase; letter-spacing:.4px; padding:8px 10px;
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody tr{ border-bottom:1px solid var(--line); }
+  tbody tr:hover{ background:var(--panel-2); }
+  tbody td{ padding:10px; vertical-align:top; }
+  .name-cell b{ display:block; }
+  .name-cell span{ color:var(--muted); font-size:11.5px; }
+  .pill{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px;
+    font-weight:700; border:1px solid var(--line);
+  }
+  .pill.temp-alta{ color:var(--red); border-color:var(--red);}
+  .pill.temp-media{ color:var(--yellow); border-color:var(--yellow);}
+  .pill.temp-baja{ color:var(--blue-2); border-color:var(--blue-2);}
+  .pill.status{ color:var(--white); background:var(--panel-2); }
+  .reminder-tag{ font-size:11.5px; margin-top:4px; padding:3px 7px; border-radius:6px; display:inline-block;}
+  .reminder-tag.overdue{ background:rgba(255,92,92,.12); color:var(--red); border:1px solid rgba(255,92,92,.4);}
+  .reminder-tag.today{ background:rgba(255,176,32,.12); color:var(--yellow); border:1px solid rgba(255,176,32,.4);}
+  .reminder-tag.soon{ background:rgba(47,125,255,.12); color:var(--blue-2); border:1px solid rgba(47,125,255,.4);}
+  .reminder-tag.future{ background:transparent; color:var(--muted); border:1px solid var(--line);}
+
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--muted); }
+  .empty-state b{ color:var(--white); display:block; margin-bottom:6px; font-size:15px;}
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px);
+    display:none; align-items:flex-start; justify-content:center; z-index:100;
+    padding:40px 16px; overflow-y:auto;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:780px; padding:24px 26px 26px;
+  }
+  .modal h2{ margin:0 0 4px; font-size:18px; }
+  .section-title{
+    font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--blue-2);
+    margin:22px 0 10px; padding-top:14px; border-top:1px solid var(--line);
+  }
+  .section-title:first-of-type{ border-top:none; margin-top:16px; padding-top:0; }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-grid .full{ grid-column:1/-1; }
+  label{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:5px;}
+  input, select, textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--white);
+    padding:10px 11px; border-radius:8px; font-size:13.5px; font-family:inherit;
+  }
+  textarea{ resize:vertical; min-height:56px; }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--blue); }
+  .modal-actions{ display:flex; justify-content:space-between; margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+
+  /* reminders */
+  .quick-reminders{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .custom-reminder{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; }
+  .custom-reminder input[type="text"]{ flex:1; min-width:180px; }
+  .custom-reminder input[type="date"]{ width:160px; }
+  .reminder-list, .log-list{ display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
+  .reminder-entry, .log-entry{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; font-size:12.5px; display:flex; justify-content:space-between; gap:10px; align-items:center;
+  }
+  .reminder-entry.overdue{ border-color:rgba(255,92,92,.5); }
+  .reminder-entry.today{ border-color:rgba(255,176,32,.5); }
+  .reminder-entry .rt{ font-weight:700; }
+  .reminder-entry.done{ opacity:.45; }
+  .reminder-entry.done .rt{ text-decoration:line-through; }
+  .re-left{ display:flex; align-items:center; gap:8px; }
+  .re-date{ color:var(--muted); font-size:11.5px; white-space:nowrap; }
+  .log-entry .lt{ color:var(--blue-2); font-weight:700; }
+  .log-entry .ld{ color:var(--muted); white-space:nowrap; }
+  .quick-log{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+
+  footer.hint{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:30px; }
+
+  @media (max-width:900px){
+    .stats{ grid-template-columns:repeat(2,1fr); }
+    .alert-grid{ grid-template-columns:1fr; }
+    .form-grid{ grid-template-columns:1fr; }
+    table thead{ display:none; }
+    tbody tr{ display:block; padding:12px 0; }
+    tbody td{ display:block; padding:4px 10px; }
+    tbody td:before{ content: attr(data-label); color:var(--muted); font-size:10.5px; text-transform:uppercase; display:block; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1><span class="dot"></span> CRM Clientes</h1>
+    <div class="sub">Fichas de clientes y seguimiento comercial</div>
+  </div>
+  <div class="top-actions">
+    <button class="ghost" onclick="document.getElementById('fileImport').click()">⇪ Importar JSON</button>
+    <input type="file" id="fileImport" accept=".json" style="display:none" onchange="importJSON(event)">
+    <button class="ghost" onclick="exportJSON()">⇩ Exportar JSON</button>
+    <button class="ghost" onclick="exportCSV()">⇩ Exportar CSV</button>
+    <button class="primary" onclick="openModal()">+ Nuevo cliente</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="stats" id="statsBar"></div>
+
+  <div class="panel">
+    <h2>Alarmas <small id="alertSummary"></small></h2>
+    <div class="alert-grid">
+      <div class="alert-col overdue">
+        <h3>Vencidas</h3>
+        <div id="alertOverdue"></div>
+      </div>
+      <div class="alert-col today">
+        <h3>Para hoy</h3>
+        <div id="alertToday"></div>
+      </div>
+      <div class="alert-col soon">
+        <h3>Próximos 7 días</h3>
+        <div id="alertSoon"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Clientes <small id="countLabel"></small></h2>
+    <div class="filters">
+      <input type="text" id="fSearch" placeholder="Buscar por nombre o teléfono..." oninput="render()">
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Busca</th>
+            <th>Origen</th>
+            <th>Estado</th>
+            <th>Última acción</th>
+            <th>Próxima alarma</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <b>Todavía no hay clientes</b>
+      Agregá el primero con el botón "Nuevo cliente" o importá tu base desde un JSON.
+    </div>
+  </div>
+
+  <footer class="hint">Los datos se guardan solo en este navegador (localStorage). Exportá JSON seguido para tener respaldo.</footer>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="ghost close small" style="float:right;" onclick="closeModal()">✕ Cerrar</button>
+    <h2 id="modalTitle">Nuevo cliente</h2>
+    <div class="sub" style="color:var(--muted); font-size:12px;">Ficha completa del cliente y su historial.</div>
+
+    <div class="section-title">Datos personales</div>
+    <div class="form-grid">
+      <div><label>Nombre completo</label><input id="fNombre" type="text" placeholder="Ej: Marta Ruiz"></div>
+      <div><label>Teléfono</label><input id="fTelefono" type="text" placeholder="+34 600 000 000"></div>
+      <div><label>Email</label><input id="fEmail" type="email" placeholder="cliente@email.com"></div>
+      <div><label>Dónde vive</label><input id="fDireccion" type="text" placeholder="Ej: Valencia capital"></div>
+    </div>
+
+    <div class="section-title">Qué busca</div>
+    <div class="form-grid">
+      <div class="full"><label>Qué busca (tipo de propiedad, características)</label><input id="fQueBusca" type="text" placeholder="Ej: piso 3 hab. con terraza y garaje"></div>
+      <div><label>Zona donde busca</label><input id="fZona" type="text" placeholder="Ej: Paterna, Valencia capital"></div>
+      <div><label>Precio medio</label><input id="fPrecioMedio" type="text" placeholder="Ej: 180.000 €"></div>
+      <div><label>Precio máximo</label><input id="fPrecioMax" type="text" placeholder="Ej: 220.000 €"></div>
+      <div class="full"><label>Lo que descarta</label><input id="fDescarta" type="text" placeholder="Ej: plantas bajas, sin ascensor, zonas ruidosas"></div>
+    </div>
+
+    <div class="section-title">Origen y estado</div>
+    <div class="form-grid">
+      <div><label>De dónde viene</label>
+        <select id="fOrigen">
+          <option>Página web</option>
+          <option>Referenciado</option>
+          <option>Portal inmobiliario</option>
+          <option>Oficina</option>
+          <option>Redes sociales</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div><label>Estado</label>
+        <select id="fEstado2">
+          <option>Nuevo</option>
+          <option>Contactado</option>
+          <option>Interesado</option>
+          <option>Oferta enviada</option>
+          <option>Negociación</option>
+          <option>Cerrado - ganado</option>
+          <option>Cerrado - perdido</option>
+          <option>Descartado</option>
+        </select>
+      </div>
+      <div><label>Temperatura</label>
+        <select id="fTemp2">
+          <option value="Alta">Alta 🔴</option>
+          <option value="Media">Media 🟡</option>
+          <option value="Baja">Baja 🔵</option>
+        </select>
+      </div>
+      <div><label>Fecha estimada de operación</label><input id="fFechaPrevista" type="date"></div>
+      <div class="full"><label>Comentarios generales</label><textarea id="fComentarios" placeholder="Cualquier detalle relevante sobre el cliente..."></textarea></div>
+    </div>
+
+    <div class="section-title">Próximas acciones / alarmas</div>
+    <div class="quick-reminders">
+      <button class="small" onclick="quickReminder(7,'Llamar')">📞 Llamar en 1 semana</button>
+      <button class="small" onclick="quickReminder(15,'Llamar')">📞 Llamar en 15 días</button>
+      <button class="small" onclick="quickReminder(30,'Llamar')">📞 Llamar en 1 mes</button>
+      <button class="small" onclick="quickReminder(7,'Enviar mensaje')">💬 Mensaje en 1 semana</button>
+    </div>
+    <div class="custom-reminder">
+      <div style="flex:1; min-width:180px;"><label>Recordatorio personalizado</label><input type="text" id="fReminderTexto" placeholder="Ej: enviar nuevas propiedades"></div>
+      <div><label>Fecha</label><input type="date" id="fReminderFecha"></div>
+      <button class="small primary" onclick="addCustomReminder()">+ Agregar</button>
+    </div>
+    <div class="reminder-list" id="reminderList"></div>
+
+    <div class="section-title">Historial de acciones y comentarios</div>
+    <div class="quick-log">
+      <button class="small" onclick="quickLog('Llamada')">📞 Registrar llamada</button>
+      <button class="small" onclick="quickLog('Mensaje')">💬 Registrar mensaje</button>
+      <button class="small" onclick="quickLog('Email')">✉️ Registrar email</button>
+      <button class="small" onclick="quickLog('Oferta enviada')">📄 Registrar oferta</button>
+      <button class="small" onclick="quickLog('Reunión / Visita')">🤝 Registrar visita</button>
+      <button class="small" onclick="quickLog('Comentario')">📝 Agregar comentario</button>
+    </div>
+    <div class="log-list" id="logList"></div>
+
+    <div class="modal-actions">
+      <button class="danger ghost" id="btnDelete" onclick="deleteContact()" style="display:none;">Eliminar cliente</button>
+      <div style="display:flex; gap:10px; margin-left:auto;">
+        <button class="ghost" onclick="closeModal()">Cancelar</button>
+        <button class="primary" onclick="saveContact()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'crm_contactos_inmobiliaria_v2';
+const OLD_STORAGE_KEY = 'crm_contactos_inmobiliaria_v1';
+let contacts = [];
+let editingId = null;
+let tempLog = [];
+let tempReminders = [];
+
+function load(){
+  try{
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      // migrar datos de la version anterior si existen
+      const old = localStorage.getItem(OLD_STORAGE_KEY);
+      if(old){
+        const oldData = JSON.parse(old);
+        contacts = oldData.map(migrateOld);
+        save();
+        return;
+      }
+    }
+    contacts = raw ? JSON.parse(raw) : [];
+  }catch(e){ contacts = []; }
+}
+function migrateOld(c){
+  const recordatorios = [];
+  if(c.recordatorioFecha){
+    recordatorios.push({ id: uid(), texto: c.recordatorioNota || 'Recordatorio', fecha: c.recordatorioFecha, hecho:false });
+  }
+  return {
+    id: c.id, creado: c.creado, nombre: c.nombre, telefono: c.telefono, email: c.email,
+    direccion:'', quebusca: c.propiedad || '', zona: c.zona || '', precioMedio:'', precioMax: c.presupuesto || '',
+    descarta:'', origen: c.origen || 'Otro', estado: c.estado || 'Nuevo', temperatura: c.temperatura || 'Media',
+    fechaPrevista: c.fechaPrevista || '', comentarios: c.notas || c.preferencias || '',
+    interacciones: c.interacciones || [], recordatorios
+  };
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts));
+}
+function uid(){ return 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function daysDiff(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const t = new Date(todayStr() + 'T00:00:00');
+  return Math.round((d - t) / 86400000);
+}
+function fmtDate(dateStr){
+  if(!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+function escapeHtml(str){
+  return (str||'').toString().replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* ---------- MODAL ---------- */
+function openModal(id){
+  editingId = id || null;
+  tempLog = [];
+  tempReminders = [];
+  document.getElementById('overlay').classList.add('show');
+  if(id){
+    const c = contacts.find(x=>x.id===id);
+    document.getElementById('modalTitle').textContent = c.nombre;
+    document.getElementById('btnDelete').style.display = 'inline-flex';
+    fNombre.value = c.nombre||''; fTelefono.value = c.telefono||''; fEmail.value = c.email||''; fDireccion.value = c.direccion||'';
+    fQueBusca.value = c.quebusca||''; fZona.value = c.zona||''; fPrecioMedio.value = c.precioMedio||''; fPrecioMax.value = c.precioMax||'';
+    fDescarta.value = c.descarta||'';
+    fOrigen.value = c.origen||'Página web'; fEstado2.value = c.estado||'Nuevo'; fTemp2.value = c.temperatura||'Media';
+    fFechaPrevista.value = c.fechaPrevista||''; fComentarios.value = c.comentarios||'';
+    tempLog = (c.interacciones||[]).slice();
+    tempReminders = (c.recordatorios||[]).slice();
+  } else {
+    document.getElementById('modalTitle').textContent = 'Nuevo cliente';
+    document.getElementById('btnDelete').style.display = 'none';
+    ['fNombre','fTelefono','fEmail','fDireccion','fQueBusca','fZona','fPrecioMedio','fPrecioMax','fDescarta','fFechaPrevista','fComentarios','fReminderTexto','fReminderFecha']
+      .forEach(id2=>document.getElementById(id2).value='');
+    fOrigen.value='Página web'; fEstado2.value='Nuevo'; fTemp2.value='Media';
+  }
+  renderLog();
+  renderReminders();
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+  editingId = null; tempLog = []; tempReminders = [];
+}
+
+/* ---------- HISTORIAL DE ACCIONES ---------- */
+function quickLog(tipo){
+  const nota = prompt(tipo==='Comentario' ? 'Comentario:' : `Nota para "${tipo}" (opcional):`, '');
+  if(nota === null) return;
+  tempLog.unshift({ id: uid(), tipo, fecha: todayStr(), nota: nota||'' });
+  renderLog();
+}
+function renderLog(){
+  const list = document.getElementById('logList');
+  if(!tempLog.length){
+    list.innerHTML = '<div class="empty-mini">Sin acciones registradas todavía.</div>';
+    return;
+  }
+  const sorted = [...tempLog].sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  list.innerHTML = sorted.map(l => `
+    <div class="log-entry">
+      <div><span class="lt">${escapeHtml(l.tipo)}</span> ${l.nota ? '— '+escapeHtml(l.nota) : ''}</div>
+      <div class="ld">${fmtDate(l.fecha)}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------- RECORDATORIOS / ALARMAS ---------- */
+function quickReminder(days, texto){
+  tempReminders.unshift({ id: uid(), texto, fecha: addDays(todayStr(), days), hecho:false });
+  renderReminders();
+}
+function addCustomReminder(){
+  const texto = document.getElementById('fReminderTexto').value.trim();
+  const fecha = document.getElementById('fReminderFecha').value;
+  if(!texto || !fecha){ alert('Completá el texto y la fecha del recordatorio.'); return; }
+  tempReminders.unshift({ id: uid(), texto, fecha, hecho:false });
+  document.getElementById('fReminderTexto').value = '';
+  document.getElementById('fReminderFecha').value = '';
+  renderReminders();
+}
+function toggleReminder(id){
+  const r = tempReminders.find(x=>x.id===id);
+  if(r) r.hecho = !r.hecho;
+  renderReminders();
+}
+function deleteReminder(id){
+  tempReminders = tempReminders.filter(x=>x.id!==id);
+  renderReminders();
+}
+function renderReminders(){
+  const list = document.getElementById('reminderList');
+  if(!tempReminders.length){
+    list.innerHTML = '<div class="empty-mini">Sin recordatorios cargados.</div>';
+    return;
+  }
+  const sorted = [...tempReminders].sort((a,b)=> a.fecha.localeCompare(b.fecha));
+  list.innerHTML = sorted.map(r=>{
+    const diff = daysDiff(r.fecha);
+    let cls = '';
+    if(!r.hecho){ if(diff<0) cls='overdue'; else if(diff===0) cls='today'; }
+    return `
+    <div class="reminder-entry ${cls} ${r.hecho?'done':''}">
+      <div class="re-left">
+        <input type="checkbox" onchange="toggleReminder('${r.id}')" ${r.hecho?'checked':''}>
+        <span class="rt">${escapeHtml(r.texto)}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="re-date">${fmtDate(r.fecha)}</span>
+        <button class="small ghost" onclick="deleteReminder('${r.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveContact(){
+  const nombre = document.getElementById('fNombre').value.trim();
+  if(!nombre){ alert('El nombre es obligatorio.'); return; }
+  const data = {
+    nombre,
+    telefono: fTelefono.value.trim(),
+    email: fEmail.value.trim(),
+    direccion: fDireccion.value.trim(),
+    quebusca: fQueBusca.value.trim(),
+    zona: fZona.value.trim(),
+    precioMedio: fPrecioMedio.value.trim(),
+    precioMax: fPrecioMax.value.trim(),
+    descarta: fDescarta.value.trim(),
+    origen: fOrigen.value,
+    estado: fEstado2.value,
+    temperatura: fTemp2.value,
+    fechaPrevista: fFechaPrevista.value,
+    comentarios: fComentarios.value.trim(),
+    interacciones: tempLog,
+    recordatorios: tempReminders,
+  };
+  if(editingId){
+    const idx = contacts.findIndex(c=>c.id===editingId);
+    contacts[idx] = {...contacts[idx], ...data};
+  } else {
+    contacts.push({ id: uid(), creado: todayStr(), ...data });
+  }
+  save();
+  closeModal();
+  render();
+}
+function deleteContact(){
+  if(!editingId) return;
+  if(!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
+  contacts = contacts.filter(c=>c.id!==editingId);
+  save();
+  closeModal();
+  render();
+}
+
+/* ---------- HELPERS DE LISTADO ---------- */
+function nextReminderOf(c){
+  const pending = (c.recordatorios||[]).filter(r=>!r.hecho);
+  if(!pending.length) return null;
+  return [...pending].sort((a,b)=>a.fecha.localeCompare(b.fecha))[0];
+}
+function lastInteraction(c){
+  if(!c.interacciones || !c.interacciones.length) return null;
+  return [...c.interacciones].sort((a,b)=> b.fecha.localeCompare(a.fecha))[0];
+}
+function reminderTagHtml(r){
+  if(!r) return '<span class="reminder-tag future">Sin alarma</span>';
+  const diff = daysDiff(r.fecha);
+  let cls='future', label=`${escapeHtml(r.texto)} · ${fmtDate(r.fecha)}`;
+  if(diff<0){ cls='overdue'; label = `Vencido: ${escapeHtml(r.texto)} · ${fmtDate(r.fecha)}`; }
+  else if(diff===0){ cls='today'; label = `Hoy: ${escapeHtml(r.texto)}`; }
+  else if(diff<=7){ cls='soon'; label = `En ${diff}d: ${escapeHtml(r.texto)}`; }
+  return `<span class="reminder-tag ${cls}">${label}</span>`;
+}
+
+/* ---------- RENDER PRINCIPAL ---------- */
+function render(){
+  const search = document.getElementById('fSearch').value.toLowerCase().trim();
+  let list = contacts.filter(c=>{
+    if(!search) return true;
+    return (c.nombre||'').toLowerCase().includes(search) || (c.telefono||'').toLowerCase().includes(search);
+  });
+
+  list.sort((a,b)=>{
+    const ra = nextReminderOf(a); const rb = nextReminderOf(b);
+    const da = ra ? ra.fecha : '9999-99-99';
+    const db = rb ? rb.fecha : '9999-99-99';
+    return da.localeCompare(db);
+  });
+
+  document.getElementById('countLabel').textContent = `(${list.length} de ${contacts.length})`;
+
+  const tbody = document.getElementById('tbody');
+  const emptyState = document.getElementById('emptyState');
+  if(!contacts.length){
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+  } else if(!list.length){
+    emptyState.style.display = 'none';
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:30px;">No hay clientes que coincidan con la búsqueda.</td></tr>`;
+  } else {
+    emptyState.style.display = 'none';
+    tbody.innerHTML = list.map(c=>{
+      const li = lastInteraction(c);
+      const nr = nextReminderOf(c);
+      return `
+      <tr onclick="openModal('${c.id}')" style="cursor:pointer;">
+        <td data-label="Cliente" class="name-cell">
+          <b>${escapeHtml(c.nombre)}</b>
+          <span>${escapeHtml(c.telefono||'')}</span>
+        </td>
+        <td data-label="Busca">
+          ${escapeHtml(c.quebusca||'—')}<br>
+          <span style="color:var(--muted); font-size:11.5px;">${escapeHtml(c.zona||'')}</span>
+        </td>
+        <td data-label="Origen">${escapeHtml(c.origen||'—')}</td>
+        <td data-label="Estado">
+          <span class="pill status">${escapeHtml(c.estado||'Nuevo')}</span><br>
+          <span class="pill temp-${(c.temperatura||'Media').toLowerCase()}" style="margin-top:4px;">${escapeHtml(c.temperatura||'Media')}</span>
+        </td>
+        <td data-label="Última acción">
+          ${li ? `<b style="font-size:12px;">${escapeHtml(li.tipo)}</b><br><span style="color:var(--muted); font-size:11.5px;">${fmtDate(li.fecha)}</span>` : '<span class="empty-mini">Sin registrar</span>'}
+        </td>
+        <td data-label="Próxima alarma">${reminderTagHtml(nr)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  renderStats();
+  renderAlerts();
+}
+
+function renderStats(){
+  const total = contacts.length;
+  const abiertos = contacts.filter(c=>!['Cerrado - ganado','Cerrado - perdido','Descartado'].includes(c.estado)).length;
+  const calientes = contacts.filter(c=>c.temperatura==='Alta').length;
+  let vencidas = 0;
+  contacts.forEach(c=>(c.recordatorios||[]).forEach(r=>{ if(!r.hecho && daysDiff(r.fecha)<0) vencidas++; }));
+  const ganados = contacts.filter(c=>c.estado==='Cerrado - ganado').length;
+  const bar = document.getElementById('statsBar');
+  bar.innerHTML = `
+    <div class="stat"><b>${total}</b><span>Clientes totales</span></div>
+    <div class="stat"><b>${abiertos}</b><span>En seguimiento activo</span></div>
+    <div class="stat warn"><b>${calientes}</b><span>Leads en caliente 🔴</span></div>
+    <div class="stat alert"><b>${vencidas}</b><span>Alarmas vencidas</span></div>
+    <div class="stat good"><b>${ganados}</b><span>Cerrados - ganados</span></div>
+  `;
+}
+
+function renderAlerts(){
+  const all = [];
+  contacts.forEach(c=> (c.recordatorios||[]).forEach(r=>{
+    if(!r.hecho) all.push({ clienteId:c.id, nombre:c.nombre, texto:r.texto, fecha:r.fecha });
+  }));
+  const overdue = all.filter(r=>daysDiff(r.fecha)<0).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const today = all.filter(r=>daysDiff(r.fecha)===0);
+  const soon = all.filter(r=>{ const d=daysDiff(r.fecha); return d>0 && d<=7; }).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+
+  function renderCol(elId, arr, emptyMsg){
+    const el = document.getElementById(elId);
+    if(!arr.length){ el.innerHTML = `<div class="empty-mini">${emptyMsg}</div>`; return; }
+    el.innerHTML = arr.map(r=>`
+      <div class="alert-item" onclick="openModal('${r.clienteId}')">
+        <div class="an">${escapeHtml(r.nombre)}</div>
+        <div class="ad">${escapeHtml(r.texto)} · ${fmtDate(r.fecha)}</div>
+      </div>
+    `).join('');
+  }
+  renderCol('alertOverdue', overdue, 'Nada vencido 👍');
+  renderCol('alertToday', today, 'Nada para hoy');
+  renderCol('alertSoon', soon, 'Nada en los próximos días');
+
+  document.getElementById('alertSummary').textContent =
+    `${overdue.length} vencidas · ${today.length} hoy · ${soon.length} próximos 7 días`;
+}
+
+/* ---------- IMPORT / EXPORT ---------- */
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(contacts, null, 2)], {type:'application/json'});
+  triggerDownload(blob, `clientes_crm_${todayStr()}.json`);
+}
+function exportCSV(){
+  const cols = ['nombre','telefono','email','direccion','quebusca','zona','precioMedio','precioMax','descarta','origen','estado','temperatura','fechaPrevista','comentarios'];
+  const header = cols.join(',');
+  const rows = contacts.map(c=> cols.map(k=>{
+    let v = (c[k] ?? '').toString().replace(/"/g,'""');
+    return `"${v}"`;
+  }).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  triggerDownload(blob, `clientes_crm_${todayStr()}.csv`);
+}
+function triggerDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('formato inválido');
+      const withIds = data.map(c => ({ id: c.id || uid(), creado: c.creado || todayStr(), recordatorios: c.recordatorios||[], interacciones: c.interacciones||[], ...c }));
+      if(confirm(`Se encontraron ${withIds.length} clientes. ¿Agregar a la base actual? (Cancelar = reemplazar todo)`)){
+        contacts = contacts.concat(withIds);
+      } else {
+        contacts = withIds;
+      }
+      save(); render();
+      alert('Importación completada.');
+    }catch(err){
+      alert('No se pudo leer el archivo. Verificá que sea un JSON exportado desde este mismo sistema.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- INIT ---------- */
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') closeModal();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') closeModal();
+});
+
+load();
+render();
+</script>
+</body>
+</html>

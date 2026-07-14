@@ -279,7 +279,22 @@
   <div class="modal">
     <button class="ghost close small" style="float:right;" onclick="closeModal()">✕ Cerrar</button>
     <h2 id="modalTitle">Nuevo cliente</h2>
-    <div class="sub" style="color:var(--muted); font-size:12px;">Ficha completa del cliente y su historial.</div>
+    <div class="sub" style="color:var(--muted); font-size:12px;" id="modalSub">Ficha completa del cliente y su historial.</div>
+
+    <!-- VISTA DE SOLO LECTURA -->
+    <div id="viewPanel" style="display:none;">
+      <div id="viewContent"></div>
+      <div class="modal-actions">
+        <button class="danger ghost" onclick="deleteContact()">Eliminar cliente</button>
+        <div style="display:flex; gap:10px; margin-left:auto;">
+          <button class="ghost" onclick="closeModal()">Cerrar</button>
+          <button class="primary" onclick="enterEditMode()">✎ Editar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO DE EDICIÓN -->
+    <div id="editPanel">
 
     <div class="section-title">Datos personales</div>
     <div class="form-grid">
@@ -361,10 +376,12 @@
     <div class="modal-actions">
       <button class="danger ghost" id="btnDelete" onclick="deleteContact()" style="display:none;">Eliminar cliente</button>
       <div style="display:flex; gap:10px; margin-left:auto;">
-        <button class="ghost" onclick="closeModal()">Cancelar</button>
+        <button class="ghost" id="btnCancelEdit" onclick="closeModal()">Cancelar</button>
         <button class="primary" onclick="saveContact()">Guardar</button>
       </div>
     </div>
+
+    </div><!-- /editPanel -->
   </div>
 </div>
 
@@ -438,27 +455,104 @@ function openModal(id){
   if(id){
     const c = contacts.find(x=>x.id===id);
     document.getElementById('modalTitle').textContent = c.nombre;
-    document.getElementById('btnDelete').style.display = 'inline-flex';
-    fNombre.value = c.nombre||''; fTelefono.value = c.telefono||''; fEmail.value = c.email||''; fDireccion.value = c.direccion||'';
-    fQueBusca.value = c.quebusca||''; fZona.value = c.zona||''; fPrecioMedio.value = c.precioMedio||''; fPrecioMax.value = c.precioMax||'';
-    fDescarta.value = c.descarta||'';
-    fOrigen.value = c.origen||'Página web'; fEstado2.value = c.estado||'Nuevo'; fTemp2.value = c.temperatura||'Media';
-    fFechaPrevista.value = c.fechaPrevista||''; fComentarios.value = c.comentarios||'';
-    tempLog = (c.interacciones||[]).slice();
-    tempReminders = (c.recordatorios||[]).slice();
+    document.getElementById('modalSub').textContent = 'Ficha del cliente';
+    renderViewContent(c);
+    document.getElementById('viewPanel').style.display = '';
+    document.getElementById('editPanel').style.display = 'none';
   } else {
     document.getElementById('modalTitle').textContent = 'Nuevo cliente';
+    document.getElementById('modalSub').textContent = 'Completá los datos del cliente.';
+    document.getElementById('viewPanel').style.display = 'none';
+    document.getElementById('editPanel').style.display = '';
     document.getElementById('btnDelete').style.display = 'none';
+    document.getElementById('btnCancelEdit').textContent = 'Cancelar';
     ['fNombre','fTelefono','fEmail','fDireccion','fQueBusca','fZona','fPrecioMedio','fPrecioMax','fDescarta','fFechaPrevista','fComentarios','fReminderTexto','fReminderFecha']
       .forEach(id2=>document.getElementById(id2).value='');
     fOrigen.value='Página web'; fEstado2.value='Nuevo'; fTemp2.value='Media';
+    renderLog();
+    renderReminders();
   }
+}
+function enterEditMode(){
+  const c = contacts.find(x=>x.id===editingId);
+  if(!c) return;
+  document.getElementById('modalSub').textContent = 'Editando ficha del cliente';
+  fNombre.value = c.nombre||''; fTelefono.value = c.telefono||''; fEmail.value = c.email||''; fDireccion.value = c.direccion||'';
+  fQueBusca.value = c.quebusca||''; fZona.value = c.zona||''; fPrecioMedio.value = c.precioMedio||''; fPrecioMax.value = c.precioMax||'';
+  fDescarta.value = c.descarta||'';
+  fOrigen.value = c.origen||'Página web'; fEstado2.value = c.estado||'Nuevo'; fTemp2.value = c.temperatura||'Media';
+  fFechaPrevista.value = c.fechaPrevista||''; fComentarios.value = c.comentarios||'';
+  fReminderTexto.value=''; fReminderFecha.value='';
+  tempLog = (c.interacciones||[]).slice();
+  tempReminders = (c.recordatorios||[]).slice();
+  document.getElementById('btnDelete').style.display = 'inline-flex';
+  document.getElementById('btnCancelEdit').textContent = 'Volver a la ficha';
+  document.getElementById('viewPanel').style.display = 'none';
+  document.getElementById('editPanel').style.display = '';
   renderLog();
   renderReminders();
 }
 function closeModal(){
   document.getElementById('overlay').classList.remove('show');
   editingId = null; tempLog = []; tempReminders = [];
+}
+function renderViewContent(c){
+  const nr = nextReminderOf(c);
+  const pendientes = (c.recordatorios||[]).filter(r=>!r.hecho).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const hechos = (c.recordatorios||[]).filter(r=>r.hecho);
+  const acciones = [...(c.interacciones||[])].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  const field = (label, value) => `<div><label>${label}</label><div style="padding:9px 0; font-size:13.5px;">${value ? escapeHtml(value) : '<span class="empty-mini">Sin datos</span>'}</div></div>`;
+  const fieldFull = (label, value) => `<div class="full"><label>${label}</label><div style="padding:9px 0; font-size:13.5px;">${value ? escapeHtml(value) : '<span class="empty-mini">Sin datos</span>'}</div></div>`;
+
+  let html = '';
+  html += `<div class="section-title">Datos personales</div><div class="form-grid">`;
+  html += field('Teléfono', c.telefono) + field('Email', c.email) + field('Dónde vive', c.direccion);
+  html += `</div>`;
+
+  html += `<div class="section-title">Qué busca</div><div class="form-grid">`;
+  html += fieldFull('Qué busca', c.quebusca);
+  html += field('Zona donde busca', c.zona) + field('Precio medio', c.precioMedio) + field('Precio máximo', c.precioMax);
+  html += fieldFull('Lo que descarta', c.descarta);
+  html += `</div>`;
+
+  html += `<div class="section-title">Origen y estado</div><div class="form-grid">`;
+  html += field('De dónde viene', c.origen);
+  html += `<div><label>Estado</label><div style="padding:9px 0;"><span class="pill status">${escapeHtml(c.estado||'Nuevo')}</span></div></div>`;
+  html += `<div><label>Temperatura</label><div style="padding:9px 0;"><span class="pill temp-${(c.temperatura||'Media').toLowerCase()}">${escapeHtml(c.temperatura||'Media')}</span></div></div>`;
+  html += field('Fecha estimada de operación', c.fechaPrevista ? fmtDate(c.fechaPrevista) : '');
+  html += fieldFull('Comentarios generales', c.comentarios);
+  html += `</div>`;
+
+  html += `<div class="section-title">Próximas acciones / alarmas</div>`;
+  if(!pendientes.length && !hechos.length){
+    html += `<div class="empty-mini">Sin recordatorios cargados.</div>`;
+  } else {
+    html += `<div class="reminder-list" style="max-height:none;">`;
+    pendientes.forEach(r=>{
+      const diff = daysDiff(r.fecha);
+      let cls = diff<0 ? 'overdue' : (diff===0 ? 'today' : '');
+      html += `<div class="reminder-entry ${cls}"><div class="re-left"><span class="rt">${escapeHtml(r.texto)}</span></div><span class="re-date">${fmtDate(r.fecha)}</span></div>`;
+    });
+    hechos.forEach(r=>{
+      html += `<div class="reminder-entry done"><div class="re-left"><span class="rt">${escapeHtml(r.texto)}</span></div><span class="re-date">${fmtDate(r.fecha)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="section-title">Historial de acciones y comentarios</div>`;
+  if(!acciones.length){
+    html += `<div class="empty-mini">Sin acciones registradas todavía.</div>`;
+  } else {
+    html += `<div class="log-list" style="max-height:none;">` + acciones.map(l=>`
+      <div class="log-entry">
+        <div><span class="lt">${escapeHtml(l.tipo)}</span> ${l.nota ? '— '+escapeHtml(l.nota) : ''}</div>
+        <div class="ld">${fmtDate(l.fecha)}</div>
+      </div>
+    `).join('') + `</div>`;
+  }
+
+  document.getElementById('viewContent').innerHTML = html;
 }
 
 /* ---------- HISTORIAL DE ACCIONES ---------- */
